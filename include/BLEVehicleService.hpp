@@ -34,6 +34,9 @@ namespace ble
                                         0x00,
                                         0x00};
 
+        int8_t left_target_speed_ = 0;
+        int8_t right_target_speed_ = 0;
+
     public:
         BLEByteCharacteristic power_char;
         BLECharCharacteristic command_char;
@@ -63,7 +66,8 @@ namespace ble
             power_char.addDescriptor(power_format_descriptor);
 
             // set initial power value
-            power_char.writeValue((uint8_t)32);
+            command_char.writeValue('S'); // stop
+            power_char.writeValue((uint8_t)124);
         }
 
         int poll(M5AtomicMotion &motion, float p_gain)
@@ -72,48 +76,45 @@ namespace ble
             int8_t left_current_speed = motion.getMotorSpeed(LEFT_WHEEL_MOTOR_CH);
             int8_t right_current_speed = motion.getMotorSpeed(RIGHT_WHEEL_MOTOR_CH);
 
-            int8_t left_target_speed = 0;
-            int8_t right_target_speed = 0;
-
             int is_written = 0;
-            if (command_char.written())
+            if (command_char.written() || power_char.written())
             {
                 char cmd = command_char.value();
                 switch (cmd)
                 {
                 case 'F': // forward
                 case 'f':
-                    left_target_speed = power_char.value();
-                    right_target_speed = power_char.value();
+                    left_target_speed_ = power_char.value();
+                    right_target_speed_ = power_char.value();
                     break;
                 case 'B': // backward
                 case 'b':
-                    left_target_speed = -(int8_t)power_char.value();
-                    right_target_speed = -(int8_t)power_char.value();
+                    left_target_speed_ = -(int8_t)power_char.value();
+                    right_target_speed_ = -(int8_t)power_char.value();
                     break;
                 case 'L': // left, ccw turn
                 case 'l':
-                    left_target_speed = -(int8_t)power_char.value();
-                    right_target_speed = power_char.value();
+                    left_target_speed_ = -(int8_t)power_char.value();
+                    right_target_speed_ = power_char.value();
                     break;
                 case 'R': // right
                 case 'r':
-                    left_target_speed = power_char.value();
-                    right_target_speed = -(int8_t)power_char.value();
+                    left_target_speed_ = power_char.value();
+                    right_target_speed_ = -(int8_t)power_char.value();
                     break;
                 case 'S': // stop
                 case 's':
-                    right_target_speed = 0;
-                    right_target_speed = 0;
+                    left_target_speed_ = 0;
+                    right_target_speed_ = 0;
                     break;
                 }
                 is_written = 1;
             }
 
             motion.setMotorSpeed(LEFT_WHEEL_MOTOR_CH,
-                                 left_current_speed + (int8_t)(p_gain * (left_target_speed - left_current_speed)));
+                                 left_current_speed + (int8_t)(p_gain * (left_target_speed_ - left_current_speed)));
             motion.setMotorSpeed(RIGHT_WHEEL_MOTOR_CH,
-                                 right_current_speed + (int8_t)(p_gain * (right_target_speed - right_current_speed)));
+                                 right_current_speed + (int8_t)(p_gain * (right_target_speed_ - right_current_speed)));
 
             return is_written;
         }

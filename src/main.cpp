@@ -10,7 +10,7 @@ const int SERVO_R_PIN = 32;
 ble::BLEVehicleService vehicle_service;
 
 M5AtomicMotion atomic_motion;
-float p_gain = 0.5f; // proportional gain for speed control
+float p_gain = 0.2f; // proportional gain for speed control
 
 void connectToAtomicMotion(M5AtomicMotion &motion);
 
@@ -48,8 +48,15 @@ void loop()
     M5.update();
     BLE.poll();
     auto is_written = vehicle_service.poll(atomic_motion, p_gain);
+    if (is_written)
+    {
+        Serial.printf("Motor Speeds: L=%d, R=%d, %c\n",
+                      atomic_motion.getMotorSpeed(LEFT_WHEEL_MOTOR_CH),
+                      atomic_motion.getMotorSpeed(RIGHT_WHEEL_MOTOR_CH),
+                      vehicle_service.command_char.value());
+    }
 
-    delay(20);
+    delay(1000 / 30); // 30 FPS
 }
 
 void connectToAtomicMotion(M5AtomicMotion &motion)
