@@ -2,6 +2,7 @@
 #include <M5Unified.h>
 
 #include <M5AtomicMotion.h>
+#include <FastLED.h>
 #include "BLEVehicleService.hpp"
 
 const int SERVO_L_PIN = 26;
@@ -12,7 +13,16 @@ ble::BLEVehicleService vehicle_service;
 M5AtomicMotion atomic_motion;
 float p_gain = 0.2f; // proportional gain for speed control
 
+// LED setup
+// NOTE: reference is https://docs.m5stack.com/ja/arduino/m5unified/helloworld
+#define NUM_LEDS 1
+#define LED_DATA_PIN 27
+CRGB leds[NUM_LEDS];
+uint32_t count = 0;
+
+// Function prototypes
 void connectToAtomicMotion(M5AtomicMotion &motion);
+void bleBegin();
 
 void setup()
 {
@@ -20,33 +30,24 @@ void setup()
     cfg.serial_baudrate = 115200;
     M5.begin(cfg);
 
+    // LED setup as indicator
+    FastLED.addLeds<WS2811, LED_DATA_PIN, GRB>(leds, NUM_LEDS);
+    FastLED.setBrightness(20);
+
+    // AtomMotion & BLE setup
     connectToAtomicMotion(atomic_motion);
-
-    // BLE setup
-    if (!BLE.begin())
-    {
-        Serial.println("starting BLE failed!");
-        while (1)
-            ;
-    }
-    Serial.println("starting BLE success!");
-
-    String ble_address = BLE.address();
-    String local_name = "AtomicVehicle" + ble_address;
-    BLE.setDeviceName(local_name.c_str());
-    BLE.setLocalName("AtomicVehicle");
-    BLE.setAdvertisedService(vehicle_service);
-
-    // add service
-    BLE.addService(vehicle_service);
-    // start advertising
-    BLE.advertise();
+    bleBegin();
 }
 
 void loop()
 {
     M5.update();
     BLE.poll();
+
+    // LED indicator
+    leds[0] = count % 30 == 0 ? CRGB::Green : CRGB::Black;
+    FastLED.show();
+
     auto is_written = vehicle_service.poll(atomic_motion, p_gain);
     if (is_written)
     {
@@ -57,6 +58,7 @@ void loop()
     }
 
     delay(1000 / 30); // 30 FPS
+    count++;
 }
 
 void connectToAtomicMotion(M5AtomicMotion &motion)
@@ -82,6 +84,30 @@ void connectToAtomicMotion(M5AtomicMotion &motion)
     while (!motion.begin(&Wire, M5_ATOMIC_MOTION_I2C_ADDR, sda, scl, 100000))
     {
         Serial.println("Atomic Motion begin failed");
+        leds[0] = leds[0] == CRGB::Black ? CRGB::Red : CRGB::Black; // blink red
+        FastLED.show();
         delay(1000);
     }
+}
+
+void bleBegin()
+{
+    if (!BLE.begin())
+    {
+        Serial.println("starting BLE failed!");
+        while (1)
+            ;
+    }
+    Serial.println("starting BLE success!");
+
+    String ble_address = BLE.address();
+    String local_name = "AtomicVehicle" + ble_address;
+    BLE.setDeviceName(local_name.c_str());
+    BLE.setLocalName("AtomicVehicle");
+    BLE.setAdvertisedService(vehicle_service);
+
+    // add service
+    BLE.addService(vehicle_service);
+    // start advertising
+    BLE.advertise();
 }
