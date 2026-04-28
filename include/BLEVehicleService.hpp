@@ -5,9 +5,9 @@
 #define BLE_GATT_CPF_FORMAT_UINT8 0x04
 #define BLE_GATT_CPF_FORMAT_UTF8S 0x19
 
-// M1: right wheel, M2: left wheel
-#define LEFT_WHEEL_MOTOR_CH 1
-#define RIGHT_WHEEL_MOTOR_CH 0
+// M1: left wheel, M2: right wheel
+#define LEFT_WHEEL_MOTOR_CH 0
+#define RIGHT_WHEEL_MOTOR_CH 1
 
 #include <ArduinoBLE.h>
 #include <M5Unified.h>
