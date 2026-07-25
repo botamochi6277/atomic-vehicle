@@ -7,6 +7,7 @@
 
 const int SERVO_L_PIN = 26;
 const int SERVO_R_PIN = 32;
+bool is_ble_connected = false;
 
 ble::BLEVehicleService vehicle_service;
 
@@ -36,6 +37,7 @@ void setup()
 
     // AtomMotion & BLE setup
     connectToAtomicMotion(atomic_motion);
+    // vehicle_service.power_char.writeValue((uint8_t)255); // set initial power value
     bleBegin();
 }
 
@@ -43,9 +45,17 @@ void loop()
 {
     M5.update();
     BLE.poll();
+    is_ble_connected = BLE.connected();
 
     // LED indicator
-    leds[0] = count % 30 == 0 ? CRGB::Green : CRGB::Black;
+    if (is_ble_connected)
+    {
+        leds[0] = count % 30 == 0 ? CRGB::Blue : CRGB::Black;
+    }
+    else
+    {
+        leds[0] = count % 30 == 0 ? CRGB::Green : CRGB::Black;
+    }
     FastLED.show();
 
     auto is_written = vehicle_service.poll(atomic_motion, p_gain);

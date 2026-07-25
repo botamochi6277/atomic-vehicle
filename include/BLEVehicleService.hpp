@@ -67,7 +67,7 @@ namespace ble
 
             // set initial power value
             command_char.writeValue('S'); // stop
-            power_char.writeValue((uint8_t)124);
+            power_char.writeValue((uint8_t)127);
         }
 
         int poll(M5AtomicMotion &motion, float p_gain)
