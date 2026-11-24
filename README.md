@@ -47,8 +47,12 @@ graph LR
 1. Drive with the d0 joystick or d-pad
 1. Enjoy driving!
 
-The firmware receives the text `d<k><x>,<y>` written to the following characteristic, where `k` is the widget slot and `x`, `y` are 0-1023 (512 is the center).
-Only slot `d0` is used for driving: `y` is forward/backward and `x` is turning.
+The firmware receives a frame written to the following characteristic: `SOH <type><index> STX <x>,<y> ETX`
+(`SOH`/`STX`/`ETX` are the control bytes `0x01`/`0x02`/`0x03`).
+`<index>` is the number of the MicroBlue control interface (`d0` or `d1`).
+For example, `01 'd' '0' 02 "0,512" 03` is interface `d0` with x=0 and y=512.
+`x`, `y` are 0-1023 (512 is the center). A joystick sends continuous values and a d-pad sends 0 / 512 / 1023.
+Only interface `d0` is used for driving: `y` is forward/backward and `x` is turning.
 
 |Item|UUID|
 |-|-|

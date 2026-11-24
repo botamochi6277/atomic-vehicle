@@ -81,7 +81,7 @@ void loop()
     auto is_written = vehicle_service.poll(atomic_motion, p_gain);
     if (is_written)
     {
-        M5_LOGI("Motor Speeds: L=%d, R=%d, d0=(%d,%d)",
+        M5_LOGD("Motor Speeds: L=%d, R=%d, d0=(%d,%d)",
                       atomic_motion.getMotorSpeed(LEFT_WHEEL_MOTOR_CH),
                       atomic_motion.getMotorSpeed(RIGHT_WHEEL_MOTOR_CH),
                       vehicle_service.axisX(0), vehicle_service.axisY(0));
