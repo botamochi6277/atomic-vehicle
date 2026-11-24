@@ -36,28 +36,29 @@ void setup()
     cfg.serial_baudrate = 115200;
     M5.begin(cfg);
     delay(500); // wait for the serial monitor to attach
-    Serial.println("[setup] M5.begin done");
-    Serial.printf("[setup] board id = %d\n", (int)M5.getBoard());
+    M5.Log.setLogLevel(m5::log_target_serial, ESP_LOG_INFO);
+    M5_LOGI("M5.begin done");
+    M5_LOGI("board id = %d", (int)M5.getBoard());
 
     // LED setup as indicator
     FastLED.addLeds<WS2811, LED_DATA_PIN, GRB>(leds, NUM_LEDS);
     FastLED.setBrightness(20);
-    Serial.println("[setup] FastLED.addLeds done");
+    M5_LOGI("FastLED.addLeds done");
 
     // LED self test: white for 500 ms
     leds[0] = CRGB::White;
     FastLED.show();
-    Serial.println("[setup] LED set to white (self test)");
+    M5_LOGI("LED set to white (self test)");
     delay(500);
 
     // AtomMotion & BLE setup
-    Serial.println("[setup] connecting to Atomic Motion...");
+    M5_LOGI("connecting to Atomic Motion...");
     connectToAtomicMotion(atomic_motion);
-    Serial.println("[setup] Atomic Motion connected");
+    M5_LOGI("Atomic Motion connected");
 
-    Serial.println("[setup] starting BLE...");
+    M5_LOGI("starting BLE...");
     bleBegin();
-    Serial.println("[setup] setup finished");
+    M5_LOGI("setup finished");
 }
 
 void loop()
@@ -80,7 +81,7 @@ void loop()
     auto is_written = vehicle_service.poll(atomic_motion, p_gain);
     if (is_written)
     {
-        Serial.printf("Motor Speeds: L=%d, R=%d, d0=(%d,%d)\n",
+        M5_LOGI("Motor Speeds: L=%d, R=%d, d0=(%d,%d)",
                       atomic_motion.getMotorSpeed(LEFT_WHEEL_MOTOR_CH),
                       atomic_motion.getMotorSpeed(RIGHT_WHEEL_MOTOR_CH),
                       vehicle_service.axisX(0), vehicle_service.axisY(0));
@@ -112,7 +113,7 @@ void connectToAtomicMotion(M5AtomicMotion &motion)
 
     while (!motion.begin(&Wire, M5_ATOMIC_MOTION_I2C_ADDR, sda, scl, 100000))
     {
-        Serial.printf("Atomic Motion begin failed (sda=%d, scl=%d, addr=0x%02X)\n", sda, scl, M5_ATOMIC_MOTION_I2C_ADDR);
+        M5_LOGE("Atomic Motion begin failed (sda=%d, scl=%d, addr=0x%02X)", sda, scl, M5_ATOMIC_MOTION_I2C_ADDR);
         leds[0] = leds[0] == CRGB::Black ? CRGB::Red : CRGB::Black; // blink red
         FastLED.show();
         delay(1000);
@@ -127,23 +128,23 @@ void bleBegin()
         FastLED.show();
         while (1)
         {
-            Serial.println("starting BLE failed!");
+            M5_LOGE("starting BLE failed!");
             delay(1000);
         }
     }
-    Serial.println("starting BLE success!");
+    M5_LOGI("starting BLE success!");
 
     String ble_address = BLE.address();
     String local_name = "AtomicVehicle" + ble_address;
     BLE.setDeviceName(local_name.c_str());
     BLE.setLocalName("AtomicVehicle");
     BLE.setAdvertisedService(vehicle_service);
-    Serial.println("[ble] setAdvertisedService done");
+    M5_LOGI("setAdvertisedService done");
 
     // add service
     BLE.addService(vehicle_service);
-    Serial.println("[ble] addService done");
+    M5_LOGI("addService done");
     // start advertising
     bool adv_ok = BLE.advertise();
-    Serial.printf("[ble] advertise() = %d, address = %s\n", (int)adv_ok, ble_address.c_str());
+    M5_LOGI("advertise() = %d, address = %s", (int)adv_ok, ble_address.c_str());
 }
