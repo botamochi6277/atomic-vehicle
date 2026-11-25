@@ -18,7 +18,7 @@ graph LR
 
     mobile <-->| BLE|srv
 
-    subgraph M5Atom[M5 Stack Atom Lite]
+    subgraph M5Atom[M5Stack Atom Lite]
        srv[fa:fa-play Vehicle Firmware]
     end
 
@@ -41,16 +41,22 @@ graph LR
 
 ## Teleoperation
 
-1. Install [BLE Controller – Arduino ESP32](https://play.google.com/store/apps/details?id=com.circuitmagic.iot) into a mobile device.
+1. Install [MicroBlue](https://play.google.com/store/apps/details?id=com.snappyxo.microblue) ([iOS](https://apps.apple.com/app/id6469052831)) into a mobile device.
 1. Open the App
-1. Scan devices with the App and connect to *Atomic Vehicle* service
-1. Move to "Remote" Tab
-1. Edit Buttons in the Tab according to the following table
+1. Tap the Bluetooth icon at the top right and connect to *AtomicVehicle*
+1. Drive with the d0 joystick or d-pad
 1. Enjoy driving!
 
-|Label||Command Value|
-|-|-|-|
-|Forward (UP)|:arrow_up:|"F"|
-|Backward (DOWN)|:arrow_down:|"B"|
-|Left (Turn left)|:arrow_left:|"L"|
-|Right (Turn right)|:arrow_right:|"R"|
+The firmware receives a frame written to the following characteristic: `SOH <type><index> STX <x>,<y> ETX`
+(`SOH`/`STX`/`ETX` are the control bytes `0x01`/`0x02`/`0x03`).
+`<index>` is the number of the MicroBlue control interface (`d0` or `d1`).
+For example, `01 'd' '0' 02 "0,512" 03` is interface `d0` with x=0 and y=512.
+`x`, `y` are 0-1023 (512 is the center). A joystick sends continuous values and a d-pad sends 0 / 512 / 1023.
+Only interface `d0` is used for driving: `y` is forward/backward and `x` is turning.
+
+|Item|UUID|
+|-|-|
+|Service|`12345678-0000-0000-0000-123456789abc`|
+|Characteristic|`12345678-0000-0000-0000-abcdef123456`|
+
+The protocol is based on [this article](https://zenn.dev/takaki_maeda_99/articles/5c9152dfa748bb).
